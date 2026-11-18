@@ -7,7 +7,7 @@ on:
 
 jobs:
   compilar:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -20,10 +20,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Instalar plataforma Android
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Preparar SDK Android
+        shell: bash
+        run: |
+          set -e
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          command -v sdkmanager
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
