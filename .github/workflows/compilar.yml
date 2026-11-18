@@ -1,0 +1,42 @@
+name: Crear APK Agenda por Voz
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Obtener archivos
+        uses: actions/checkout@v4
+      - name: Descomprimir proyecto
+        run: unzip -q AgendaPorVoz_Android_proyecto.zip -d proyecto
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preparar Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Instalar plataforma Android
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Verificar interpretacion de fechas
+        working-directory: proyecto/AgendaPorVoz
+        run: bash run_parser_tests.sh
+      - name: Crear APK
+        working-directory: proyecto/AgendaPorVoz
+        run: gradle --no-daemon assembleDebug
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgendaPorVoz-APK
+          path: proyecto/AgendaPorVoz/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
