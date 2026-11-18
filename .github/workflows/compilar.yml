@@ -15,6 +15,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Descomprimir proyecto
         run: unzip -q AgendaPorVoz_Android_proyecto.zip -d proyecto
+      - name: Usar espejo de Maven Central
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("proyecto/AgendaPorVoz/settings.gradle")
+          content = path.read_text()
+          mirror = "maven { url 'https://maven-central-eu.storage-download.googleapis.com/maven2/' }"
+          content = content.replace("mavenCentral()", mirror + "\n        mavenCentral()")
+          path.write_text(content)
+          PY
       - name: Instalar Java 17
         uses: actions/setup-java@v4
         with:
@@ -37,7 +48,7 @@ jobs:
         run: bash run_parser_tests.sh
       - name: Crear APK
         working-directory: proyecto/AgendaPorVoz
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon --max-workers=2 assembleDebug
       - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
